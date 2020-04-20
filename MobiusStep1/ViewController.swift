@@ -9,12 +9,14 @@
 import UIKit
 
 class ViewController: UIViewController {
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
+        titleLabel.text = AppDelegate.isJailbroken() ? "Hacked" : "Safe and sound"
     }
 
-
+    //MARK: - Private
+    @IBOutlet private var titleLabel: UILabel!
+    
 }
 

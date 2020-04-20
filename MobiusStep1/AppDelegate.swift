@@ -11,27 +11,59 @@ import UIKit
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
-
+    var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         return true
     }
+    
+    static func isJailbroken() -> Bool {
+        #if arch(i386) || arch(x86_64)
+            // This is a Simulator not an idevice
+            return false
+        #endif
 
-    // MARK: UISceneSession Lifecycle
+        if let cydiaUrlScheme = URL(string: "cydia://package/com.example.package"),
+            UIApplication.shared.canOpenURL(cydiaUrlScheme) {
+            return true
+        }
 
-    func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
-        // Called when a new scene session is being created.
-        // Use this method to select a configuration to create the new scene with.
-        return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
+        let fileManager = FileManager.default
+        if fileManager.fileExists(atPath: "/Applications/Cydia.app") ||
+            fileManager.fileExists(atPath: "/Library/MobileSubstrate/MobileSubstrate.dylib") ||
+            fileManager.fileExists(atPath: "/bin/bash") ||
+            fileManager.fileExists(atPath: "/usr/sbin/sshd") ||
+            fileManager.fileExists(atPath: "/etc/apt") ||
+            fileManager.fileExists(atPath: "/usr/bin/ssh") ||
+            fileManager.fileExists(atPath: "/private/var/lib/apt") {
+            return true
+        }
+
+        if canOpen(path: "/Applications/Cydia.app") ||
+            canOpen(path: "/Library/MobileSubstrate/MobileSubstrate.dylib") ||
+            canOpen(path: "/bin/bash") ||
+            canOpen(path: "/usr/sbin/sshd") ||
+            canOpen(path: "/etc/apt") ||
+            canOpen(path: "/usr/bin/ssh") {
+            return true
+        }
+
+        let path = "/private/" + NSUUID().uuidString
+        do {
+            try "anyString".write(toFile: path, atomically: true, encoding: String.Encoding.utf8)
+            try fileManager.removeItem(atPath: path)
+            return true
+        } catch {
+            return false
+        }
     }
 
-    func application(_ application: UIApplication, didDiscardSceneSessions sceneSessions: Set<UISceneSession>) {
-        // Called when the user discards a scene session.
-        // If any sessions were discarded while the application was not running, this will be called shortly after application:didFinishLaunchingWithOptions.
-        // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
+    static func canOpen(path: String) -> Bool {
+        let file = fopen(path, "r")
+        guard file != nil else { return false }
+        fclose(file)
+        return true
     }
-
-
 }
 
